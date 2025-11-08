@@ -14,7 +14,7 @@ export default defineManifest({
     type: 'module',
   },
   content_scripts: [{
-    js: ['src/content.js'],
+    js: ['src/content/main.js'],
     matches: ['<all_urls>'],
   }],
   permissions: [
