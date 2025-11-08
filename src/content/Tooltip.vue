@@ -9,10 +9,13 @@
       <button @click="close" class="close-btn">×</button>
     </div>
     <div class="tooltip-content">
-      <p>选中的文本: {{ word }}</p>
-      <!-- 你可以在这里添加更多功能，比如翻译、词典查询等 -->
+      {{ translation }}
+      <div v-if="loading" class="loading">查询中...</div>
+      <div v-else-if="translation" class="translation" v-html="translation"></div>
+      <div v-else class="no-result">暂无释义</div>
+      
       <div class="actions">
-        <button @click="translate">翻译</button>
+        <button @click="translate">重新查询</button>
         <button @click="search">搜索</button>
       </div>
     </div>
@@ -28,6 +31,14 @@ const props = defineProps({
   position: {
     type: Object,
     default: () => ({ x: 0, y: 0 })
+  },
+  translation: {
+    type: String,
+    default: ''
+  },
+  loading: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -107,9 +118,36 @@ const search = () => {
   font-size: 14px;
 }
 
+.loading {
+  padding: 20px;
+  text-align: center;
+  color: #999;
+  font-size: 14px;
+}
+
+.translation {
+  max-height: 300px;
+  overflow-y: auto;
+  margin-bottom: 12px;
+  padding: 12px;
+  background: #f9f9f9;
+  border-radius: 4px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #333;
+}
+
+.no-result {
+  padding: 20px;
+  text-align: center;
+  color: #999;
+  font-size: 14px;
+}
+
 .actions {
   display: flex;
   gap: 8px;
+  margin-top: 12px;
 }
 
 .actions button {
