@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>MDX 库测试</title>
+</head>
+<body>
+    <h1>MDX 库加载测试</h1>
+    <div id="status">正在加载...</div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
+    <script type="module">
+        const statusDiv = document.getElementById('status');
+        
+        try {
+            // 检查 pako
+            if (typeof window.pako === 'undefined') {
+                throw new Error('pako 未加载');
+            }
+            statusDiv.innerHTML += '<br>✅ pako 已加载';
+            
+            // 导入 MDX
+            const { MDX } = await import('./js-mdcit-dist/esm/index.js');
+            statusDiv.innerHTML += '<br>✅ MDX 已加载';
+            
+            // 暴露到全局
+            window.MDX = MDX;
+            statusDiv.innerHTML += '<br>✅ MDX 已暴露到全局';
+            
+            statusDiv.innerHTML += '<br><br><strong>所有库加载成功！</strong>';
+        } catch (error) {
+            statusDiv.innerHTML += '<br>❌ 错误: ' + error.message;
+            console.error(error);
+        }
+    </script>
+</body>
+</html>

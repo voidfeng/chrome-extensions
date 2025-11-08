@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MDX 字典翻译</title>
+    <link rel="stylesheet" href="p.css">
+    <style>
+        /* 输入框样式 */
+        .search-container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        /* 文件上传区域 */
+        .upload-area {
+            margin-bottom: 20px;
+            padding: 20px;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            text-align: center;
+            background: #f9f9f9;
+            transition: all 0.3s;
+        }
+        .upload-area.dragover {
+            border-color: #0072cf;
+            background: #e8f4ff;
+        }
+        .upload-area input[type="file"] {
+            display: none;
+        }
+        .upload-btn {
+            padding: 10px 24px;
+            background: #0072cf;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .upload-btn:hover {
+            background: #005a9e;
+        }
+        .file-info {
+            margin-top: 10px;
+            color: #666;
+            font-size: 14px;
+        }
+        .file-info.success {
+            color: #5cb85c;
+        }
+        .file-info.error {
+            color: #d9534f;
+        }
+        
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .search-input {
+            flex: 1;
+            padding: 12px 16px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        .search-input:focus {
+            border-color: #0072cf;
+        }
+        .search-input:disabled {
+            background: #f5f5f5;
+            cursor: not-allowed;
+        }
+        .search-btn {
+            padding: 12px 32px;
+            font-size: 16px;
+            background: #0072cf;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .search-btn:hover:not(:disabled) {
+            background: #005a9e;
+        }
+        .search-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        .no-result {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            font-size: 16px;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #0072cf;
+        }
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+        
+        /* 随机词条样式 */
+        .random-words {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 8px;
+        }
+        .random-words h3 {
+            margin: 0 0 15px 0;
+            color: #333;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .word-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+        }
+        .word-item {
+            padding: 10px 15px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            font-size: 14px;
+            color: #333;
+        }
+        .word-item:hover {
+            background: #0072cf;
+            color: white;
+            border-color: #0072cf;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0,114,207,0.3);
+        }
+        .refresh-btn {
+            margin-top: 15px;
+            padding: 8px 20px;
+            background: #5cb85c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        .refresh-btn:hover {
+            background: #4cae4c;
+        }
+    </style>
+</head>
+<body>
+    <!-- 搜索输入框 -->
+    <div class="search-container">
+        <!-- 文件上传区域 -->
+        <div class="upload-area" id="uploadArea">
+            <p>📚 上传 MDX 字典文件</p>
+            <input type="file" id="mdxFile" accept=".mdx">
+            <button class="upload-btn" onclick="document.getElementById('mdxFile').click()">
+                选择 MDX 文件
+            </button>
+            <p class="file-info" id="fileInfo">支持拖拽文件到此区域</p>
+        </div>
+        
+        <div class="search-box">
+            <input type="text" 
+                   class="search-input" 
+                   id="wordInput" 
+                   placeholder="请先上传 MDX 字典文件..."
+                   disabled
+                   autofocus>
+            <button class="search-btn" id="searchBtn" disabled>查询</button>
+        </div>
+    </div>
+
+    <!-- 结果容器 -->
+    <div class="result-container" id="resultContainer">
+        <div class="no-result" id="initialMessage">
+            <p>👆 请先上传 MDX 字典文件</p>
+            <p>然后输入要查询的单词</p>
+            <p style="color: #d9534f; font-size: 12px; margin-top: 15px;" id="corsWarning">
+                ⚠️ 如果遇到加载错误，请使用本地服务器打开此页面
+            </p>
+        </div>
+    </div>
+
+    <!-- 引入 pako 解压库 -->
+    <script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
+    <!-- 引入 jQuery -->
+    <script src="fy.js"></script>
+    <!-- 引入本地 js-mdict 库 (ES Module) -->
+    <script type="module">
+        // 等待 pako 加载完成
+        if (typeof window.pako === 'undefined') {
+            console.error('pako library not loaded');
+            alert('解压库加载失败，请刷新页面重试');
+        } else {
+            console.log('pako library loaded successfully');
+        }
+        
+        // 导入 MDX 类（使用相对路径）
+        import { MDX } from './js-mdcit-dist/esm/index.js';
+        // 将 MDX 类暴露到全局
+        window.MDX = MDX;
+        console.log('MDX library loaded successfully');
+        // 触发自定义事件，通知库已加载
+        window.dispatchEvent(new Event('mdx-loaded'));
+    </script>
+    
+    <script>
+        // 配置选项
+        window.coca = true;
+        window.iweb = true;
+        window.spoken = true;
+        window.exam = true;
+        window.ex_ratio = true;
+        window.EPFD = true;
+        window.definition = true;
+        window.header = true;
+        window.pronuk = true;
+        window.pronus = true;
+        window.order = true;
+        window.auto_pron = false;
+        window.mobile_auto_pron = false;
+
+        // 等待 MDX 库加载完成
+        function initApp() {
+            const $input = $('#wordInput');
+            const $searchBtn = $('#searchBtn');
+            const $resultContainer = $('#resultContainer');
+            const $uploadArea = $('#uploadArea');
+            const $mdxFile = $('#mdxFile');
+            const $fileInfo = $('#fileInfo');
+
+            let mdxParser = null;
+            let allKeys = [];
+
+            // 文件上传处理
+            $mdxFile.on('change', async function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    await loadMDXFile(file);
+                }
+            });
+
+            // 拖拽上传
+            $uploadArea.on('dragover', function(e) {
+                e.preventDefault();
+                $(this).addClass('dragover');
+            });
+
+            $uploadArea.on('dragleave', function(e) {
+                e.preventDefault();
+                $(this).removeClass('dragover');
+            });
+
+            $uploadArea.on('drop', async function(e) {
+                e.preventDefault();
+                $(this).removeClass('dragover');
+                
+                const file = e.originalEvent.dataTransfer.files[0];
+                if (file && file.name.endsWith('.mdx')) {
+                    $mdxFile[0].files = e.originalEvent.dataTransfer.files;
+                    await loadMDXFile(file);
+                } else {
+                    $fileInfo.text('请上传 .mdx 格式的文件').addClass('error');
+                }
+            });
+
+            // 加载 MDX 文件
+            async function loadMDXFile(file) {
+                try {
+                    $fileInfo.text('正在加载字典文件...').removeClass('error success');
+                    
+                    // 检查 MDX 库是否加载
+                    if (typeof window.MDX === 'undefined') {
+                        throw new Error('MDX 解析库未加载，请刷新页面重试');
+                    }
+                    
+                    // 读取文件
+                    const arrayBuffer = await file.arrayBuffer();
+                    
+                    // 创建 MDX 解析器实例
+                    $fileInfo.text('正在解析字典...').removeClass('error success');
+                    mdxParser = new window.MDX(arrayBuffer);
+                    
+                    // 获取所有词条（使用 prefix 方法获取所有以空字符串开头的词条）
+                    $fileInfo.text('正在加载词条列表...').removeClass('error success');
+                    
+                    // 尝试获取词条列表
+                    const allKeyItems = mdxParser.prefix('');
+                    allKeys = allKeyItems.map(item => item.keyText);
+                    
+                    // 如果没有词条，尝试其他方法
+                    if (allKeys.length === 0) {
+                        // 尝试常见字母开头
+                        const letters = 'abcdefghijklmnopqrstuvwxyz'.split('');
+                        for (const letter of letters) {
+                            const items = mdxParser.prefix(letter);
+                            allKeys.push(...items.map(item => item.keyText));
+                        }
+                    }
+                    
+                    $fileInfo.text(`✓ 已加载: ${file.name} (${allKeys.length} 个词条)`).addClass('success').removeClass('error');
+                    $input.prop('disabled', false).attr('placeholder', '请输入要查询的单词...');
+                    $searchBtn.prop('disabled', false);
+                    
+                    console.log('字典加载成功，词条数:', allKeys.length);
+                    console.log('示例词条:', allKeys.slice(0, 10));
+                    
+                    // 显示随机词条
+                    displayRandomWords();
+                } catch (error) {
+                    console.error('加载失败:', error);
+                    $fileInfo.text('✗ 加载失败: ' + error.message).addClass('error').removeClass('success');
+                }
+            }
+
+            // 显示随机词条
+            function displayRandomWords() {
+                if (!allKeys || allKeys.length === 0) {
+                    $resultContainer.html('<div class="no-result"><p>没有可用的词条</p></div>');
+                    return;
+                }
+                
+                const randomKeys = getRandomWords(allKeys, 10);
+                
+                let html = `
+                    <div class="no-result">
+                        <p>✓ 字典已加载成功</p>
+                        <p>共 ${allKeys.length} 个词条</p>
+                    </div>
+                    <div class="random-words">
+                        <h3>📖 随机词条（点击查看释义）</h3>
+                        <div class="word-list">
+                `;
+                
+                randomKeys.forEach(word => {
+                    html += `<div class="word-item" data-word="${word}">${word}</div>`;
+                });
+                
+                html += `
+                        </div>
+                        <button class="refresh-btn" id="refreshBtn">🔄 换一批</button>
+                    </div>
+                `;
+                
+                $resultContainer.html(html);
+                
+                // 绑定点击事件
+                $('.word-item').on('click', function() {
+                    const word = $(this).data('word');
+                    $input.val(word);
+                    searchWord();
+                });
+                
+                // 绑定刷新按钮
+                $('#refreshBtn').on('click', function() {
+                    displayRandomWords();
+                });
+            }
+
+            // 获取随机词条
+            function getRandomWords(words, count) {
+                const shuffled = [...words].sort(() => 0.5 - Math.random());
+                return shuffled.slice(0, Math.min(count, words.length));
+            }
+
+            // 查询函数
+            async function searchWord() {
+                const word = $input.val().trim();
+                
+                if (!word) {
+                    alert('请输入要查询的单词');
+                    return;
+                }
+
+                if (!mdxParser) {
+                    alert('请先上传 MDX 字典文件');
+                    return;
+                }
+
+                try {
+                    $resultContainer.html('<div class="loading">正在查询</div>');
+                    
+                    // 使用 MDX 的 lookup 方法查询
+                    const result = mdxParser.lookup(word);
+                    
+                    if (result && result.definition) {
+                        displayResult(result.keyText, result.definition);
+                    } else {
+                        // 尝试模糊搜索
+                        const fuzzyResults = mdxParser.fuzzy_search(word, 5, 2);
+                        
+                        if (fuzzyResults && fuzzyResults.length > 0) {
+                            // 显示第一个模糊匹配结果
+                            const firstResult = mdxParser.fetch(fuzzyResults[0]);
+                            if (firstResult && firstResult.definition) {
+                                displayResult(firstResult.keyText, firstResult.definition + 
+                                    '<p style="color: #999; font-size: 12px; margin-top: 10px;">💡 显示的是相似词条</p>');
+                            } else {
+                                displayNoResult(word);
+                            }
+                        } else {
+                            displayNoResult(word);
+                        }
+                    }
+                } catch (error) {
+                    console.error('查询失败:', error);
+                    $resultContainer.html(`
+                        <div class="no-result">
+                            <p>查询出错: ${error.message}</p>
+                        </div>
+                    `);
+                }
+            }
+
+            // 显示结果
+            function displayResult(word, htmlContent) {
+                // 直接显示 MDX 返回的 HTML 内容
+                $resultContainer.html(`
+                    <div class="hwrap">
+                        <h2>${word}</h2>
+                        <hr>
+                    </div>
+                    <div class="gdc">
+                        ${htmlContent}
+                    </div>
+                    <div style="text-align: center; margin-top: 20px;">
+                        <button class="refresh-btn" id="backBtn">← 返回词条列表</button>
+                    </div>
+                `);
+                
+                // 绑定返回按钮
+                $('#backBtn').on('click', function() {
+                    displayRandomWords();
+                });
+            }
+
+            // 显示无结果
+            function displayNoResult(word) {
+                $resultContainer.html(`
+                    <div class="no-result">
+                        <p>未找到单词 "<strong>${word}</strong>" 的释义</p>
+                        <p>请检查拼写或尝试其他单词</p>
+                        <button class="refresh-btn" style="margin-top: 15px;" id="backBtn2">← 返回词条列表</button>
+                    </div>
+                `);
+                
+                // 绑定返回按钮
+                $('#backBtn2').on('click', function() {
+                    displayRandomWords();
+                });
+            }
+
+            // 绑定事件
+            $searchBtn.on('click', searchWord);
+            $input.on('keypress', function(e) {
+                if (e.which === 13 && !$(this).prop('disabled')) {
+                    searchWord();
+                }
+            });
+        }
+
+        // 等待 MDX 库加载
+        if (window.MDX) {
+            jQuery(initApp);
+        } else {
+            window.addEventListener('mdx-loaded', function() {
+                jQuery(initApp);
+            });
+        }
+    </script>
+</body>
+</html>
