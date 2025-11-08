@@ -1,0 +1,1 @@
+console.log("Background service worker 已启动");chrome.runtime.onInstalled.addListener(e=>{console.log("扩展已安装:",e.reason),e.reason==="install"?console.log("这是首次安装"):e.reason==="update"&&console.log("扩展已更新")});chrome.runtime.onMessage.addListener((e,n,o)=>(console.log("收到消息:",e),e.action==="getData"&&o({data:"这是来自background的数据"}),!0));

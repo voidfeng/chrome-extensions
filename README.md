@@ -1,44 +1,56 @@
-# Chrome 扩展项目
+# Chrome 扩展 - Vite 开发版
 
-这是一个使用 Manifest V3 的 Chrome 扩展项目。
+使用 Vite 7 + CRXJS 2.2 构建的现代化 Chrome 扩展项目。
 
 ## 项目结构
 
 ```
-.
-├── manifest.json       # 扩展配置文件 (Manifest V3)
-├── popup.html         # 弹窗页面
-├── popup.css          # 弹窗样式
-├── popup.js           # 弹窗脚本
-├── background.js      # 后台服务工作线程
-├── content.js         # 内容脚本（注入到网页）
-└── icons/             # 图标文件夹（需要添加图标）
+src/
+├── popup/           # 弹窗页面
+│   ├── index.html
+│   ├── main.js
+│   └── style.css
+├── background.js    # 后台服务
+└── content.js       # 内容脚本
 ```
 
-## 安装步骤
+## 开发
 
-1. 打开 Chrome 浏览器
-2. 访问 `chrome://extensions/`
-3. 开启右上角的"开发者模式"
+```bash
+# 安装依赖
+npm install
+
+# 启动开发服务器（支持热重载）
+npm run dev
+
+# 构建生产版本
+npm run build
+```
+
+## 加载扩展
+
+1. 运行 `npm run dev` 或 `npm run build`
+2. 打开 Chrome 浏览器，访问 `chrome://extensions/`
+3. 开启"开发者模式"
 4. 点击"加载已解压的扩展程序"
-5. 选择本项目文件夹
+5. 选择项目的 `dist` 目录
 
-## 功能说明
+## 特性
 
-- **Popup**: 点击扩展图标显示弹窗界面
-- **Background Service Worker**: 后台运行的服务工作线程
-- **Content Script**: 注入到网页中的脚本，可以操作DOM
-- **Storage API**: 使用 chrome.storage 保存数据
-- **消息传递**: popup、background 和 content script 之间的通信
+- ✅ 热重载：修改代码后自动刷新扩展
+- ✅ 现代化打包：使用 Vite 7 的快速构建
+- ✅ 模块化：支持 ES modules
+- ✅ 自动打包：构建后自动生成 zip 文件到 `release` 目录
+- ✅ TypeScript 支持：已包含 @types/chrome
 
-## 注意事项
+## 配置文件
 
-- 需要在 `icons/` 文件夹中添加 16x16、48x48 和 128x128 的图标文件
-- 或者暂时从 manifest.json 中删除 icons 相关配置
+- `manifest.config.js` - 扩展清单配置
+- `vite.config.js` - Vite 构建配置
+- `package.json` - 项目依赖和脚本
 
-## Manifest V3 特性
+## 技术栈
 
-- 使用 Service Worker 替代 background pages
-- 使用 `action` 替代 `browser_action` 和 `page_action`
-- 更严格的内容安全策略
-- 改进的权限系统
+- Vite 7.2.2
+- @crxjs/vite-plugin 2.2.1
+- Chrome Extension Manifest V3
